@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app: s3-provider
+  name: s3-provider
+  namespace: s3
+spec:
+  selector:
+    matchLabels:
+      app: s3-provider
+  template:
+    metadata:
+      labels:
+        app: s3-provider
+    spec:
+      containers:
+        - name: s3fuse
+          image: mbict/s3fs
+          imagePullPolicy: Always
+          securityContext:
+            privileged: true
+          envFrom:
+            - configMapRef:
+                name: s3-config
+            - secretRef:
+                name: s3-secrets
+          volumeMounts:
+            - name: devfuse
+              mountPath: /dev/fuse
+            - name: mntdatas3fs
+              mountPath: /var/s3:shared
+      volumes:
+        - name: devfuse
+          hostPath:
+            path: /dev/fuse
+        - name: mntdatas3fs
+          # this is where the s3 bucket will be mounted on the kubernetes node
+          hostPath:
+            path: /mnt/data-s3fs
